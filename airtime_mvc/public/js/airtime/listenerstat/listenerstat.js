@@ -95,6 +95,7 @@ function plot(datasets){
                 backgroundColor: { colors: ["#888888", "#999999"] }
             },
             series: {
+				stack: true, 
                 lines: {
                     show: true,
                     fill: 0.3
