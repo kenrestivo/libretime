@@ -150,13 +150,54 @@ server.register(namespace="dynamic_source",
 #                "read_stop_all",
 #                fun (s) -> begin log("dynamic_source.read_stop") destroy_dynamic_source_all() end)
 
-default = amplify(id="silence_src", 0.00001, noise())
-ref_off_air_meta = ref off_air_meta
-if !ref_off_air_meta == "" then
-    ref_off_air_meta := "Airtime - offline"
-end
-default = rewrite_metadata([("title", !ref_off_air_meta)], default)
-ignore(output.dummy(default, fallible=true))
+
+
+
+
+
+silence = amplify(id="silence_src", 0.00001, noise())
+ignore(output.dummy(silence, fallible=true))
+
+log(off_air_meta)
+
+# check both drop and imported locations, 
+# just in case something screws up via airtime
+jukebox = audio_to_stereo(id="stereoize",
+                          skip_blank(id="stor-skipblank",
+                                     playlist(id="archives", 
+                                              reload=86400, 
+                                              "/usr/share/airtime/public/archives")))
+
+
+
+spaz = strip_blank(id="spaz-stripblank",
+                   threshold=-20.0, 
+                   max_blank=20.0,
+                   audio_to_stereo(id="stereoize-spaz-http",
+                                   input.http(id="spaz-http",
+                                              buffer=120.0,
+                                              timeout=20.0,
+                                              max=240.0,
+                                              "http://stream.spaz.org:8050/stream")))
+
+local_live = strip_blank(id="local-stripblank",
+                         threshold=-80.0, 
+                         max_blank=20.0,
+                         audio_to_stereo(id="stereoize-local-http",
+                                         input.http(id="local-http",
+                                                    "http://localhost:8050/stream")))
+
+
+# this is the master control for the stream right here.
+# the sources are listed in priority order
+default = fallback(id="default-switcher",
+                   track_sensitive=false,
+                   [spaz,
+                    local_live,
+                    jukebox,
+                    silence])
+
+
 
 master_dj_enabled = ref false
 live_dj_enabled = ref false
