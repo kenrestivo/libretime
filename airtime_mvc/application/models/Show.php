@@ -1108,6 +1108,7 @@ FROM cc_show_instances si
 WHERE si.show_id = s.id
   AND si.starts <= :timeNow1::timestamp
   AND si.ends > :timeNow2::timestamp
+  AND s.name NOT LIKE '%HIDDEN%'
   AND modified_instance != TRUE
 SQL;
 
