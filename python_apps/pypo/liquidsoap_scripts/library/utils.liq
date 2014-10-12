@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 # Turn a source into an infaillible source.
 # by adding blank when the source is not available.
@@ -726,4 +727,38 @@ def log_clocks(~delay=0.,~interval=1.,logfile)
   else
     add_timeout(delay,{add_timeout(interval,report) (-1.)})
   end
+end
+
+def legal_name_fix(s)
+  string.replace(pattern='[^abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]+',
+                 fun (_) -> '_',s)
+end
+
+def format_save(m)
+  [("title", list.nth(get_process_lines("date '+%Y-%m-%d'"),0)),
+   ('artist', legal_name_fix(m['artist_clean']))]
+end
+
+
+def orn(a,b) 
+  if a != "" then
+    a 
+  else 
+    b 
+  end
+end
+
+# Pattern used everywhere in Airtime: for side effects or sinking, 
+# send output of a stream to an ignored output.dummy
+# @category Liquidsoap
+# @param ~s A source
+def dummy_up(s)
+  ignore(output.dummy(fallible=true, s))
+end
+
+
+def log_metadata(msg, s)
+  dummy_up(on_metadata(fun (m) -> 
+                       log(msg ^ " now: #{m}")
+                       ,s))
 end

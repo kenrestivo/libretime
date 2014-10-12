@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def notify(m)
   command = "/usr/lib/airtime/pypo/bin/liquidsoap_scripts/notify.sh --media-id=#{m['schedule_table_id']} &"
   log(command)
@@ -410,4 +411,20 @@ def http_fallback(~http_input_id,~http,~default)
       {connected() and source.is_ready(http) and !webstream_enabled}, http),
      ({true},default)])
 
+end
+
+
+def munge_live_hdr(m)
+  log("got headers #{m}")
+  # not setting title here because it might get set by something else
+  lm =  [("artist_clean", orn(m['ice-name'], m['icy-name'])),
+                ("artist", "[LIVE!] " ^ 
+                 orn(m['ice-name'], m['icy-name'] ) 
+                 ^ " - " ^ 
+                 orn(m['ice-description']  , m['icy-description'] )),
+                ("mapped", "true"), # make airtime stop attempting to mangle it
+                ("description",  
+                 orn(m['ice-description'], m['icy-description']))]
+  log("set live_meta to #{lm}")
+  lm
 end
