@@ -199,6 +199,22 @@ default = fallback(id="default-switcher",
 
 
 
+# the legacy saving
+output.file(%vorbis,
+            fallible=true,
+            append=true,
+            "/home/streams/%Y-%m-%d-%H_%M_%S-local.ogg",
+            local_live)
+
+
+output.file(%vorbis,
+            fallible=true,
+            append=true,
+            "/home/streams/%Y-%m-%d-%H_%M_%S.ogg",
+            spaz)
+
+
+
 master_dj_enabled = ref false
 live_dj_enabled = ref false
 scheduled_play_enabled = ref false
