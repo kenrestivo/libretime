@@ -736,6 +736,7 @@ end
 
 def format_save(m)
   [("title", list.nth(get_process_lines("date '+%Y-%m-%d'"),0)),
+   ('album', m['artist_clean']),
    ('artist', legal_name_fix(m['artist_clean']))]
 end
 
@@ -756,11 +757,14 @@ def dummy_up(s)
   ignore(output.dummy(fallible=true, s))
 end
 
+def log2_metadata(msg, m)
+  mj = json_of(m)
+  log(msg ^ " now: #{mj}")
+end
 
 def log_metadata(msg, s)
-  dummy_up(on_metadata(fun (m) -> 
-                       log(msg ^ " now: #{m}")
-                       ,s))
+  dummy_up(on_metadata(log2_metadata(msg), s))
+                       
 end
 
 # hacks to get around bug in 1.1.1 where skip_blank was removed and not replaced or documnted!!

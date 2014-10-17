@@ -338,18 +338,23 @@ s = if master_live_stream_port != 0 and master_live_stream_mp != "" then
 
     dummy_up(master_dj)
 
-    master_meta = map_metadata(id="master_metadata",
-                               fun(_)-> !live_meta, 
-                               drop_metadata(master_dj))
+    pair = insert_metadata(drop_metadata(master_dj))
+    master_metadata_f = fst(pair)
+    master_meta = snd(pair)
 
 
-    ## for saving the streams
-    master_save = map_metadata(id="save_metadata", 
-                               fun(discard)-> format_save(!live_meta),
-                               drop_metadata(master_dj))
+    spair = insert_metadata(drop_metadata(master_dj))
+    save_metadata_f = fst(spair)
+    master_save = snd(spair)
+
+
+    def force_live_metadata(_)
+      ignore(master_metadata_f(!live_meta))
+      ignore(save_metadata_f(format_save(!live_meta)))
+    end
+
 
     log_metadata("SAVE metadata before output", master_save)
-
 
     output.file(%vorbis,
                   fallible=true,
@@ -359,7 +364,8 @@ s = if master_live_stream_port != 0 and master_live_stream_mp != "" then
                   "/home/streams/%Y-%m-%d-%H_%M_%S-$(artist).ogg",
                   buffer(fallible=true, master_save))
 
-
+    dummy_up(on_track(force_live_metadata, master_raw))
+ 
     switch(id="master_show_schedule_noise_switch",
             track_sensitive=false,
             [({!master_dj_enabled}, master_meta), ({true}, s)]
