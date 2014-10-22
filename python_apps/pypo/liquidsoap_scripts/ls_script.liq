@@ -325,6 +325,7 @@ s = if master_live_stream_port != 0 and master_live_stream_mp != "" then
                 master_live_stream_mp,
                 port=master_live_stream_port,
                 auth=check_master_dj_client,
+                logfile="/tmp/master-buffer.log",
                 max=40.,
                 on_connect=master_dj_connect,
                 on_disconnect=master_dj_disconnect))
