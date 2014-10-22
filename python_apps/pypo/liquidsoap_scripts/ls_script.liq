@@ -53,9 +53,9 @@ def create_source()
     sources := list.append([l], !sources)
     server.register(namespace="queues",
                 "s#{!source_id}_skip",
-                fun (s) -> begin log("queues.s#{!source_id}_skip") 
-                    clear_queue(l) 
-                    "Done" 
+                fun (s) -> begin log("queues.s#{!source_id}_skip")
+                    clear_queue(l)
+                    "Done"
                 end)
     source_id := !source_id + 1
 end
@@ -160,18 +160,18 @@ ignore(output.dummy(silence, fallible=true))
 
 log(off_air_meta)
 
-# check both drop and imported locations, 
+# check both drop and imported locations,
 # just in case something screws up via airtime
 jukebox = audio_to_stereo(id="stereoize",
                           skip_blank(id="stor-skipblank",
-                                     playlist(id="archives", 
-                                              reload=86400, 
+                                     playlist(id="archives",
+                                              reload=86400,
                                               "/usr/share/airtime/public/archives")))
 
 
 
 spaz = strip_blank(id="spaz-stripblank",
-                   threshold=-20.0, 
+                   threshold=-20.0,
                    max_blank=20.0,
                    audio_to_stereo(id="stereoize-spaz-http",
                                    input.http(id="spaz-http",
@@ -181,7 +181,7 @@ spaz = strip_blank(id="spaz-stripblank",
                                               "http://stream.spaz.org:8050/stream")))
 
 local_live = strip_blank(id="local-stripblank",
-                         threshold=-80.0, 
+                         threshold=-80.0,
                          max_blank=20.0,
                          audio_to_stereo(id="stereoize-local-http",
                                          input.http(id="local-http",
@@ -331,10 +331,10 @@ s = if master_live_stream_port != 0 and master_live_stream_mp != "" then
 
       # we don't want dj's leaving their system on and forgetting...
       master_dj = strip_blank(id="master-stripblank",
-                              threshold=-30.0, 
+                              threshold=-30.0,
                               max_blank=60.0,
                               master_raw)
-       
+
 
     dummy_up(master_dj)
 
@@ -362,13 +362,21 @@ s = if master_live_stream_port != 0 and master_live_stream_mp != "" then
                   reopen_on_metadata=true,
                   reopen_delay=0.0,
                   "/home/streams/%Y-%m-%d-%H_%M_%S-$(artist).ogg",
-                  buffer(fallible=true, master_save))
+                  buffer(id="master_save_buffer",
+                         fallible=true, 
+                         master_save))
 
     dummy_up(on_track(force_live_metadata, master_raw))
- 
+
+    master_buffer = buffer(id="master_dj_buffer",
+                           fallible=true,
+                           on_start=fun()->ignore(master_metadata_f(!live_meta)),
+                           master_meta)
+
+
     switch(id="master_show_schedule_noise_switch",
             track_sensitive=false,
-            [({!master_dj_enabled}, master_meta), ({true}, s)]
+            [({!master_dj_enabled}, master_buffer), ({true}, s)]
         )
 else
     s
