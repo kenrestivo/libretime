@@ -268,6 +268,7 @@ end
 
 def master_dj_disconnect() =
     update_source_status("master_dj", false)
+    live_meta := []
 end
 
 #auth function for live stream
@@ -357,15 +358,20 @@ s = if master_live_stream_port != 0 and master_live_stream_mp != "" then
 
     log_metadata("SAVE metadata before output", master_save)
 
+    master_save_buffer = buffer(id="master_save_buffer",
+                         fallible=true, 
+                         on_start=fun()->ignore(save_metadata_f(format_save(!live_meta))),
+                         master_save)
+
+
     output.file(%vorbis,
                   fallible=true,
                   append=true,
                   reopen_on_metadata=true,
                   reopen_delay=0.0,
                   "/home/streams/%Y-%m-%d-%H_%M_%S-$(artist).ogg",
-                  buffer(id="master_save_buffer",
-                         fallible=true, 
-                         master_save))
+                  master_save_buffer)
+
 
     dummy_up(on_track(force_live_metadata, master_raw))
 
