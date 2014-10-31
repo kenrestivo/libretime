@@ -144,7 +144,7 @@ function updatePlaybar(){
                 $('#current').html($.i18n._("Current")+": <span style='color:red; font-weight:bold'>"+$.i18n._("Live Stream")+"</span>");
             }
         } else {
-            $('#current').html($.i18n._("Current")+": <span style='color:red; font-weight:bold'>"+$.i18n._("Nothing Scheduled")+"</span>");
+            $('#current').html($.i18n._("Current")+": <span style='color:red; font-weight:bold'>"+$.i18n._("Jukebox or Live")+"</span>");
         }
     }
 
