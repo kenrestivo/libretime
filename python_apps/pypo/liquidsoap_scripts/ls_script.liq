@@ -366,9 +366,9 @@ s = if master_live_stream_port != 0 and master_live_stream_mp != "" then
 
     output.file(%vorbis,
                   fallible=true,
-                  append=true,
+                  append=false,
                   reopen_on_metadata=true,
-                  reopen_delay=0.0,
+                  reopen_delay=30.0,
                   "/home/streams/%Y-%m-%d-%H_%M_%S-$(artist).ogg",
                   master_save_buffer)
 
