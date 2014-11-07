@@ -352,7 +352,6 @@ s = if master_live_stream_port != 0 and master_live_stream_mp != "" then
 
     def force_live_metadata(_)
       ignore(master_metadata_f(!live_meta))
-      ignore(save_metadata_f(format_save(!live_meta)))
     end
 
 
@@ -361,6 +360,7 @@ s = if master_live_stream_port != 0 and master_live_stream_mp != "" then
     master_save_buffer = buffer(id="master_save_buffer",
                          fallible=true, 
                          on_start=fun()->ignore(save_metadata_f(format_save(!live_meta))),
+                         on_stop=fun()->ignore(save_metadata_f([]))),
                          master_save)
 
 
@@ -373,7 +373,7 @@ s = if master_live_stream_port != 0 and master_live_stream_mp != "" then
                   master_save_buffer)
 
 
-    dummy_up(on_track(force_live_metadata, master_raw))
+    dummy_up(on_metadata(force_live_metadata, master_raw))
 
     master_buffer = buffer(id="master_dj_buffer",
                            fallible=true,
