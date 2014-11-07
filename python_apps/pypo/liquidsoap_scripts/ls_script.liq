@@ -360,7 +360,7 @@ s = if master_live_stream_port != 0 and master_live_stream_mp != "" then
     master_save_buffer = buffer(id="master_save_buffer",
                          fallible=true, 
                          on_start=fun()->ignore(save_metadata_f(format_save(!live_meta))),
-                         on_stop=fun()->ignore(save_metadata_f([]))),
+                         on_stop=fun()->ignore(save_metadata_f([])),
                          master_save)
 
 
