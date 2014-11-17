@@ -170,48 +170,14 @@ jukebox = audio_to_stereo(id="stereoize",
 
 
 
-spaz = strip_blank(id="spaz-stripblank",
-                   threshold=-20.0,
-                   max_blank=20.0,
-                   audio_to_stereo(id="stereoize-spaz-http",
-                                   input.http(id="spaz-http",
-                                              buffer=120.0,
-                                              timeout=20.0,
-                                              max=240.0,
-                                              "http://stream.spaz.org:8050/stream")))
-
-local_live = strip_blank(id="local-stripblank",
-                         threshold=-80.0,
-                         max_blank=20.0,
-                         audio_to_stereo(id="stereoize-local-http",
-                                         input.http(id="local-http",
-                                                    "http://localhost:8050/stream")))
 
 
 # this is the master control for the stream right here.
 # the sources are listed in priority order
 default = fallback(id="default-switcher",
                    track_sensitive=false,
-                   [spaz,
-                    local_live,
-                    jukebox,
+                   [jukebox,
                     silence])
-
-
-
-# the legacy saving
-output.file(%vorbis,
-            fallible=true,
-            append=true,
-            "/home/streams/%Y-%m-%d-%H_%M_%S-local.ogg",
-            local_live)
-
-
-output.file(%vorbis,
-            fallible=true,
-            append=true,
-            "/home/streams/%Y-%m-%d-%H_%M_%S.ogg",
-            spaz)
 
 
 
