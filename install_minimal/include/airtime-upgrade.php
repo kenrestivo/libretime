@@ -70,6 +70,8 @@ $version = substr($version, 0, 5);
 
 $SCRIPTPATH = __DIR__;
 
+$version = "2.5.1";
+
 if (strcmp($version, "2.2.0") < 0) {
     echo "Unsupported Airtime version. You must upgrade from at least Airtime 2.2.0.".PHP_EOL;
     exit(1);

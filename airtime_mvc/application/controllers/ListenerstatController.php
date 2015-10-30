@@ -9,7 +9,7 @@ class ListenerstatController extends Zend_Controller_Action
         ->addActionContext('get-data', 'json')
         ->initContext();
     }
-
+    
     public function indexAction()
     {
         $CC_CONFIG = Config::getConfig();
@@ -27,25 +27,17 @@ $this->view->headScript()->appendFile($baseUrl.'js/flot/jquery.flot.stack.js?'.$
 
         $this->view->headLink()->appendStylesheet($baseUrl.'css/jquery.ui.timepicker.css?'.$CC_CONFIG['airtime_version']);
 
-        //default time is the last 24 hours.
-        $now = time();
-        $from = $request->getParam("from", $now - (24*60*60));
-        $to = $request->getParam("to", $now);
-        
-        $utcTimezone = new DateTimeZone("UTC");
-        $displayTimeZone = new DateTimeZone(Application_Model_Preference::GetTimezone());
-
-        $start = DateTime::createFromFormat("U", $from, $utcTimezone);
-        $start->setTimezone($displayTimeZone);
-        $end = DateTime::createFromFormat("U", $to, $utcTimezone);
-        $end->setTimezone($displayTimeZone);
+        list($startsDT, $endsDT) = Application_Common_HTTPHelper::getStartEndFromRequest($request);
+        $userTimezone = new DateTimeZone(Application_Model_Preference::GetUserTimezone());
+        $startsDT->setTimezone($userTimezone);
+        $endsDT->setTimezone($userTimezone);
 
         $form = new Application_Form_DateRange();
         $form->populate(array(
-                'his_date_start' => $start->format("Y-m-d"),
-                'his_time_start' => $start->format("H:i"),
-                'his_date_end' => $end->format("Y-m-d"),
-                'his_time_end' => $end->format("H:i")
+            'his_date_start' => $startsDT->format("Y-m-d"),
+            'his_time_start' => $startsDT->format("H:i"),
+            'his_date_end' => $endsDT->format("Y-m-d"),
+            'his_time_end' => $endsDT->format("H:i")
         ));
 
         $errorStatus = Application_Model_StreamSetting::GetAllListenerStatErrors();
@@ -64,17 +56,8 @@ $this->view->headScript()->appendFile($baseUrl.'js/flot/jquery.flot.stack.js?'.$
     }
 
     public function getDataAction(){
-        $request = $this->getRequest();
-        $current_time = time();
-
-        $params = $request->getParams();
-
-        $starts_epoch = $request->getParam("startTimestamp", $current_time - (60*60*24));
-        $ends_epoch = $request->getParam("endTimestamp", $current_time);
-
-        $startsDT = DateTime::createFromFormat("U", $starts_epoch, new DateTimeZone("UTC"));
-        $endsDT = DateTime::createFromFormat("U", $ends_epoch, new DateTimeZone("UTC"));
-
+        list($startsDT, $endsDT) = Application_Common_HTTPHelper::getStartEndFromRequest($this->getRequest());
+        
         $data = Application_Model_ListenerStat::getDataPointsWithinRange($startsDT->format("Y-m-d H:i:s"), $endsDT->format("Y-m-d H:i:s"));
         $this->_helper->json->sendJson($data);
     }

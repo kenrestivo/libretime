@@ -1,3 +1,7 @@
 airtime_mvc/public/tests
 airtime_mvc/public/buffer
 *~
+install_log.txt
+build/
+*.egg-info/
+*.egg

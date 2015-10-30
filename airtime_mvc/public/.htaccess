@@ -24,4 +24,8 @@ AddOutputFilterByType DEFLATE application/javascript
 AddOutputFilterByType DEFLATE application/x-javascript
 AddOutputFilterByType DEFLATE application/json
 
+<<<<<<< HEAD
 AddType text/calendar .ics
+=======
+AddType text/calendar .ics
+>>>>>>> attempt-2.5.2-merge

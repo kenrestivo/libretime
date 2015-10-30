@@ -1,29 +1,39 @@
 <?php
-require_once __DIR__."/configs/conf.php";
+require_once CONFIG_PATH . "conf.php";
 $CC_CONFIG = Config::getConfig();
 
-require_once __DIR__."/configs/ACL.php";
+require_once CONFIG_PATH . "ACL.php";
 require_once 'propel/runtime/lib/Propel.php';
 
-Propel::init(__DIR__."/configs/airtime-conf-production.php");
+// Since we initialize the database during the configuration check,
+// check the $configRun global to avoid reinitializing unnecessarily
+if (!isset($configRun) || !$configRun) {
+    Propel::init(CONFIG_PATH . 'airtime-conf-production.php');
+}
 
-require_once __DIR__."/configs/constants.php";
+require_once CONFIG_PATH . "constants.php";
 require_once 'Preference.php';
 require_once 'Locale.php';
 require_once "DateHelper.php";
+require_once "HTTPHelper.php";
 require_once "OsPath.php";
 require_once "Database.php";
 require_once "Timezone.php";
+require_once "Auth.php";
 require_once __DIR__.'/forms/helpers/ValidationTypes.php';
+require_once __DIR__.'/forms/helpers/CustomDecorators.php';
 require_once __DIR__.'/controllers/plugins/RabbitMqPlugin.php';
+require_once __DIR__.'/upgrade/Upgrades.php';
 
-require_once (APPLICATION_PATH."/logging/Logging.php");
+require_once (APPLICATION_PATH . "/logging/Logging.php");
 Logging::setLogPath('/var/log/airtime/zendphp.log');
 
 Config::setAirtimeVersion();
-require_once __DIR__."/configs/navigation.php";
+require_once (CONFIG_PATH . 'navigation.php');
 
 Zend_Validate::setDefaultNamespaces("Zend");
+
+Application_Model_Auth::pinSessionToClient(Zend_Auth::getInstance());
 
 $front = Zend_Controller_Front::getInstance();
 $front->registerPlugin(new RabbitMqPlugin());
@@ -47,8 +57,9 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         $view = $this->getResource('view');
         $baseUrl = Application_Common_OsPath::getBaseDir();
 
-        $view->headScript()->appendScript("var baseUrl = '$baseUrl'");
-
+        $view->headScript()->appendScript("var baseUrl = '$baseUrl';");
+        $this->_initTranslationGlobals($view);
+        
         $user = Application_Model_User::GetCurrentUser();
         if (!is_null($user)){
             $userType = $user->getType();
@@ -56,7 +67,25 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
             $userType = "";
         }
         $view->headScript()->appendScript("var userType = '$userType';");
-
+    }
+    
+    /**
+     * Ideally, globals should be written to a single js file once 
+     * from a php init function. This will save us from having to 
+     * reinitialize them every request
+     */
+    private function _initTranslationGlobals($view) {
+        $view->headScript()->appendScript("var PRODUCT_NAME = '" . PRODUCT_NAME . "';");
+        $view->headScript()->appendScript("var USER_MANUAL_URL = '" . USER_MANUAL_URL . "';");
+        $view->headScript()->appendScript("var COMPANY_NAME = '" . COMPANY_NAME . "';");
+    }
+    
+    protected function _initUpgrade() {
+        /* We need to wrap this here so that we aren't checking when we're running the unit test suite
+         */
+        if (getenv("AIRTIME_UNIT_TEST") != 1) {
+            UpgradeManager::checkIfUpgradeIsNeeded(); //This will do the upgrade too if it's needed...
+        }
     }
 
     protected function _initHeadLink()
@@ -101,18 +130,18 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         $view->headScript()->appendScript("$.i18n.setDictionary(general_dict)");
         $view->headScript()->appendScript("var baseUrl='$baseUrl'");
         
-		//These timezones are needed to adjust javascript Date objects on the client to make sense to the user's set timezone
-		//or the server's set timezone.
+        //These timezones are needed to adjust javascript Date objects on the client to make sense to the user's set timezone
+        //or the server's set timezone.
         $serverTimeZone = new DateTimeZone(Application_Model_Preference::GetDefaultTimezone());
         $now = new DateTime("now", $serverTimeZone);
         $offset = $now->format("Z") * -1;
         $view->headScript()->appendScript("var serverTimezoneOffset = {$offset}; //in seconds");
         
         if (class_exists("Zend_Auth", false) && Zend_Auth::getInstance()->hasIdentity()) {
-        	$userTimeZone = new DateTimeZone(Application_Model_Preference::GetUserTimezone());
-        	$now = new DateTime("now", $userTimeZone);
-        	$offset = $now->format("Z") * -1;
-        	$view->headScript()->appendScript("var userTimezoneOffset = {$offset}; //in seconds");
+            $userTimeZone = new DateTimeZone(Application_Model_Preference::GetUserTimezone());
+            $now = new DateTime("now", $userTimeZone);
+            $offset = $now->format("Z") * -1;
+            $view->headScript()->appendScript("var userTimezoneOffset = {$offset}; //in seconds");
         }
         
         //scripts for now playing bar
@@ -151,7 +180,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
     protected function _initViewHelpers()
     {
         $view = $this->getResource('view');
-        $view->addHelperPath('../application/views/helpers', 'Airtime_View_Helper');
+        $view->addHelperPath(APPLICATION_PATH . 'views/helpers', 'Airtime_View_Helper');
     }
 
     protected function _initTitle()
@@ -163,7 +192,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
     protected function _initZFDebug()
     {
 
-        Zend_Controller_Front::getInstance()->throwExceptions(true);
+        Zend_Controller_Front::getInstance()->throwExceptions(false);
 
         /*
         if (APPLICATION_ENV == "development") {
@@ -189,7 +218,8 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
     {
         $front = Zend_Controller_Front::getInstance();
         $router = $front->getRouter();
-
+        $front->setBaseUrl(Application_Common_OsPath::getBaseDir());
+        
         $router->addRoute(
             'password-change',
             new Zend_Controller_Router_Route('password-change/:user_id/:token', array(

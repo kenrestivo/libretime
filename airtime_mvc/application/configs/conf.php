@@ -2,8 +2,6 @@
 /* THIS FILE IS NOT MEANT FOR CUSTOMIZING.
  * PLEASE EDIT THE FOLLOWING TO CHANGE YOUR CONFIG:
  * /etc/airtime/airtime.conf
- * /etc/airtime/pypo.cfg
- * /etc/airtime/recorder.cfg
  */
 
 class Config {
@@ -18,8 +16,13 @@ class Config {
                 "rootDir" => __DIR__."/../.."
         );
         
-        $filename = isset($_SERVER['AIRTIME_CONF']) ? $_SERVER['AIRTIME_CONF'] : "/etc/airtime/airtime.conf";
-
+        //In the unit testing environment, we always want to use our local airtime.conf in airtime_mvc/application/test:
+        if (getenv('AIRTIME_UNIT_TEST') == '1') {
+            $filename = "airtime.conf";
+        } else {
+            $filename = isset($_SERVER['AIRTIME_CONF']) ? $_SERVER['AIRTIME_CONF'] : "/etc/airtime/airtime.conf";
+        }
+        
         $values = parse_ini_file($filename, true);
 
         // Name of the web server user
@@ -29,12 +32,9 @@ class Config {
         $CC_CONFIG['baseDir'] = $values['general']['base_dir'];
         $CC_CONFIG['baseUrl'] = $values['general']['base_url'];
         $CC_CONFIG['basePort'] = $values['general']['base_port'];
-        $CC_CONFIG['phpDir'] = $values['general']['airtime_dir'];
+//        $CC_CONFIG['phpDir'] = $values['general']['airtime_dir'];
         
         $CC_CONFIG['cache_ahead_hours'] = $values['general']['cache_ahead_hours'];
-        
-        $CC_CONFIG['monit_user'] = $values['monit']['monit_user'];
-        $CC_CONFIG['monit_password'] = $values['monit']['monit_password'];
         
 	    // Database config
         $CC_CONFIG['dsn']['username'] = $values['database']['dbuser'];
