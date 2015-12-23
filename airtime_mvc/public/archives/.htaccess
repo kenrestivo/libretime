@@ -73,3 +73,6 @@
 	HeaderName /apaxy/theme/header.html
 	ReadmeName /apaxy/theme/footer.html
 	IndexStyleSheet "/apaxy/theme/style.css"
+
+Header set Access-Control-Allow-Origin "*"
+
