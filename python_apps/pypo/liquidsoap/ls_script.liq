@@ -393,6 +393,7 @@ server.register(namespace="streams",
     fun (s) -> begin log("streams.scheduled_play_start") make_scheduled_play_available() "Done." end)
 
 
+post_metadata(s)
 ## important debug function
 log_metadata("FINAL metadata before output", s)
 

@@ -740,7 +740,7 @@ def format_save(m)
    ('artist', legal_name_fix(m['artist_clean']))]
 end
 
-
+# returns a or b, like the clojure or function or ternary operator in c
 def orn(a,b) 
   if a != "" then
     a 
@@ -757,6 +757,20 @@ def dummy_up(s)
   ignore(output.dummy(fallible=true, s))
 end
 
+
+def post2_metadata(m)
+  mj = json_of(m)
+  log("posting: #{mj}")
+  ## horrible place for this, but this is such a mess, just want to get this done.
+  ignore(http.post(data=mj, "http://localhost:8080/now-playing"))
+end
+
+
+def post_metadata(s)
+  dummy_up(on_metadata(post2_metadata, s))
+end
+
+
 def log2_metadata(msg, m)
   mj = json_of(m)
   log(msg ^ " now: #{mj}")
@@ -764,7 +778,6 @@ end
 
 def log_metadata(msg, s)
   dummy_up(on_metadata(log2_metadata(msg), s))
-                       
 end
 
 # hacks to get around bug in 1.1.1 where skip_blank was removed and not replaced or documnted!!
